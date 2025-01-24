@@ -5,11 +5,19 @@ This is a basic database project for my CS3380 class. This utilizes a node.js se
 # Install
 
 ```bash
-git clone
+git clone https://github.com/Sidewardduke/database-project.git
+npm install
 ```
 
 # Run
 
 ```bash
 start run.cmd
+```
+or optionally
+```bash
+node main.js
+```
+```bash
+nodemon main.js
 ```
