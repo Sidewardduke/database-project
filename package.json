@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "fs": "^0.0.1-security",
-    "http": "^0.0.1-security"
+    "http": "^0.0.1-security",
+    "mssql": "^11.0.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"

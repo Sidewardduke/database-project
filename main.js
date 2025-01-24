@@ -1,5 +1,6 @@
 const http = require('http')
 const fs = require('fs')
+const sql = require('mssql')
 var allowedAccess = [
     '/favicon.ico',
     '/login.html',
@@ -14,15 +15,44 @@ var approvedIPs = []
 var userAccounts = []
 
 
+const sqlConfig = {
+    user: process.env.DB_USER,
+    password: process.env.DB_PWD,
+    database: process.env.DB_NAME,
+    server: 'localhost',
+    pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+    },
+    options: {
+        encrypt: true, // for azure
+        trustServerCertificate: true //self signed cert
+    }
+}
+
+    (async () => {
+        try {
+            // make sure that any items are correctly URL encoded in the connection string
+            await sql.connect(sqlConfig)
+            const result = await sql.query`select * from mytable where id = ${value}`
+            console.dir(result)
+        } catch (err) {
+            //TODO: HANDLE FAILED LOAD
+            //DATABASE FAILED TO LOAD 
+        }
+    })()
+
+
 // FUNCTIONS
 function wait(timeout) {
-	return new Promise(resolve => {
-		setTimeout(resolve, timeout);
-	});
+    return new Promise(resolve => {
+        setTimeout(resolve, timeout);
+    });
 }
 function logoutInactive() {
     if (approvedIPs.length == 0) return;
-    let user = approvedIPs.find((element) => element.time < new Date().getTime()/1000);
+    let user = approvedIPs.find((element) => element.time < new Date().getTime() / 1000);
     console.log(approvedIPs.length)
 }
 
@@ -36,22 +66,22 @@ setInterval(() => {
 const server = http.createServer(async (req, res) => {
     let url = req.url
     let userIP = req.socket.remoteAddress.replace(/[^0-9.]/g, '')
-    
+
     // ITEMS ALLOWED ACCESS TO REGARDLESS IF THEY ARE LOGGED IN
-    if(alwaysAllowedItems.includes(url)) {
+    if (alwaysAllowedItems.includes(url)) {
         res.writeHead(200, { 'content-type': 'text/html' })
         fs.createReadStream(`./${url}`).pipe(res)
         return;
     }
-    
-    
+
+
 
     console.log(userIP, url)
     //IS THIS USER LOGGED IN ALREADY?
     if (parseInt(userIP.split(".")[0]) !== 192 & !approvedIPs.includes(userIP)) {
         console.log(`[WEB] user not logged in denying access to ${url}.`)
         // USER IS NOT APPROVED TO ACCESS WEBPAGE, DENY AND SEND TO LOGIN PAGE
-        
+
 
         if (url.toString().search("\\?") !== -1) { // MAKE SURE THEY ACTUALLY INPUTED SOMETHING BEFORE CHECKING
             let rawUserNPassInput = url.split("?")[1].split("&")
@@ -65,33 +95,33 @@ const server = http.createServer(async (req, res) => {
 
 
             //USER SUCCESSFULLY LOGGED IN, ADD THEM TO APPROVED IPs ALONG WITH THE TIME THEY WERE ADDED
-            approvedIPs.push({ip: userIP, time: ((new Date().getTime()/1000)+10)})
+            approvedIPs.push({ ip: userIP, time: ((new Date().getTime() / 1000) + 10) })
             fs.createReadStream('htmlPages/index.html').pipe(res)
             console.log("user successfully logged in")
         } else {
             fs.createReadStream('htmlPages/login.html').pipe(res)
         }
-        
+
     } else {
         console.log(`htmlPages${url}`)
         if (url == "/") url = "/index.html"
-        
+
         //console.log(url, allowedAccess.includes(url))
         if (allowedAccess.includes(url)) {
-            
+
             console.log(`htmlPages${url}`)
             res.writeHead(200, { 'content-type': 'text/html' })
             fs.createReadStream(`htmlPages${url}`).pipe(res)
-            
+
 
         } else {
             fs.createReadStream('htmlPages/requestDenied.html').pipe(res)
         }
-        
+
     }
-    
+
 })
 
 //BROADCAST HTTPS SERVER
-server.listen(process.env.PORT || 80) 
+server.listen(process.env.PORT || 80)
 console.log(`[WEB] server started on port ${process.env.PORT || 80}`)
