@@ -1,5 +1,7 @@
 const http = require('http')
 const fs = require('fs')
+const mysql = require('mysql2');
+const config = require('./config')
 var allowedAccess = [
     '/favicon.ico',
     '/login.html',
@@ -26,6 +28,19 @@ function logoutInactive() {
     let user = approvedIPs.find((element) => element.time < new Date().getTime() / 1000);
     console.log(approvedIPs.length)
 }
+
+//INITIALIZE SERVER DATABASE
+var sqlServer = mysql.createConnection({
+    host: config.sqlHost,
+    user: config.sqlUser,
+    password: config.sqlPass,
+    database: config.databaseName
+});
+
+sqlServer.connect(function (err) {
+    if (err) throw err;
+    console.log("SQL Connected!");
+});
 
 
 // MAIN SERVER HANDLING
