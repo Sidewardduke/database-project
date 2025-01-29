@@ -1,6 +1,6 @@
 {
     "sqlHost": "localhost",
-    "sqlPass": "server",
-    "sqlUser": "server",
-    "databaseName": "main"
+    "sqlPass": "serverPass",
+    "sqlUser": "serverUser",
+    "databaseName": "databaseHere"
 }
